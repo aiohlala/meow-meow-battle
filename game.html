@@ -199,7 +199,7 @@
 </head>
 <body>
 
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" tabindex="0" style="outline: none;"></canvas>
     
     <audio id="bgm" loop volume="0.3">
         <source src="https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3" type="audio/mpeg">
@@ -957,6 +957,16 @@
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('ui-layer').style.pointerEvents = 'auto'; 
                 
+                // 重設輸入與按鍵狀態，保證操作立即生效
+                for (let k in keys) keys[k] = false;
+                myState.moveX = 0;
+                myState.moveY = 0;
+                inputMode = 'mouse';
+
+                // 自動將焦點給予遊戲視窗與 Canvas，防止點擊「開始」後焦點丟失導致 WASD 無法接收
+                window.focus();
+                canvas.focus();
+
                 gameActive = true;
                 
                 // 強制第一幀渲染
@@ -973,14 +983,38 @@
 
         window.addEventListener('keydown', e => {
             if (!gameActive) return; 
-            keys[e.key.toLowerCase()] = true;
-            if(e.key === '1') selectWeaponUI(0);
-            if(e.key === '2') selectWeaponUI(1);
-            if(e.key === '3') selectWeaponUI(2);
+            inputMode = 'mouse';
+            const key = e.key ? e.key.toLowerCase() : '';
+            const code = e.code ? e.code.toLowerCase() : '';
+
+            // 同時檢測 e.key 與 e.code，徹底防止中文注音/拼音輸入法 (Process) 或 CapsLock 導致 WASD 失效
+            if (key === 'w' || code === 'keyw' || key === 'arrowup' || code === 'arrowup') { keys['w'] = true; keys['arrowup'] = true; e.preventDefault(); }
+            if (key === 's' || code === 'keys' || key === 'arrowdown' || code === 'arrowdown') { keys['s'] = true; keys['arrowdown'] = true; e.preventDefault(); }
+            if (key === 'a' || code === 'keya' || key === 'arrowleft' || code === 'arrowleft') { keys['a'] = true; keys['arrowleft'] = true; e.preventDefault(); }
+            if (key === 'd' || code === 'keyd' || key === 'arrowright' || code === 'arrowright') { keys['d'] = true; keys['arrowright'] = true; e.preventDefault(); }
+
+            if (key === '1' || code === 'digit1') selectWeaponUI(0);
+            if (key === '2' || code === 'digit2') selectWeaponUI(1);
+            if (key === '3' || code === 'digit3') selectWeaponUI(2);
         });
-        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+        window.addEventListener('keyup', e => {
+            const key = e.key ? e.key.toLowerCase() : '';
+            const code = e.code ? e.code.toLowerCase() : '';
+            if (key === 'w' || code === 'keyw' || key === 'arrowup' || code === 'arrowup') { keys['w'] = false; keys['arrowup'] = false; }
+            if (key === 's' || code === 'keys' || key === 'arrowdown' || code === 'arrowdown') { keys['s'] = false; keys['arrowdown'] = false; }
+            if (key === 'a' || code === 'keya' || key === 'arrowleft' || code === 'arrowleft') { keys['a'] = false; keys['arrowleft'] = false; }
+            if (key === 'd' || code === 'keyd' || key === 'arrowright' || code === 'arrowright') { keys['d'] = false; keys['arrowright'] = false; }
+        });
+
         window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; if (gameActive) inputMode = 'mouse'; });
-        window.addEventListener('mousedown', () => { mouse.down = true; if (gameActive) inputMode = 'mouse'; });
+        window.addEventListener('mousedown', () => { 
+            window.focus(); 
+            canvas.focus(); 
+            mouse.down = true; 
+            if (gameActive) inputMode = 'mouse'; 
+        });
+        canvas.addEventListener('click', () => { window.focus(); canvas.focus(); });
         window.addEventListener('mouseup', () => mouse.down = false);
         window.addEventListener('resize', resizeCanvas);
 

@@ -803,5 +803,51 @@
         </p>
     </footer>
 
+    <script>
+        // 自動聚焦與按鍵轉發橋接：確保在入口頁面任何點擊與 WASD 按鍵均能順暢操控內嵌遊戲
+        const iframe = document.getElementById('game-iframe');
+        const arena = document.getElementById('arena');
+
+        if (arena && iframe) {
+            arena.addEventListener('mouseenter', () => {
+                try { iframe.contentWindow.focus(); } catch(e){}
+            });
+            arena.addEventListener('click', () => {
+                try { iframe.contentWindow.focus(); } catch(e){}
+            });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!iframe || !iframe.contentWindow) return;
+            const key = e.key ? e.key.toLowerCase() : '';
+            const code = e.code ? e.code.toLowerCase() : '';
+            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', '1', '2', '3', ' '].includes(key) ||
+                ['keyw', 'keya', 'keys', 'keyd', 'digit1', 'digit2', 'digit3', 'space'].includes(code)) {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.dispatchEvent(new KeyboardEvent('keydown', {
+                        key: e.key,
+                        code: e.code,
+                        keyCode: e.keyCode,
+                        which: e.which,
+                        bubbles: true
+                    }));
+                } catch(err){}
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (!iframe || !iframe.contentWindow) return;
+            try {
+                iframe.contentWindow.dispatchEvent(new KeyboardEvent('keyup', {
+                    key: e.key,
+                    code: e.code,
+                    keyCode: e.keyCode,
+                    which: e.which,
+                    bubbles: true
+                }));
+            } catch(err){}
+        });
+    </script>
 </body>
 </html>
