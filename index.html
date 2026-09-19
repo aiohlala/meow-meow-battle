@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>喵喵大戰：罐罐保衛戰 🐱｜官方公開遊戲入口網</title>
+    <meta name="description" content="《喵喵大戰：罐罐保衛戰》是一款超可愛多人即時連線 HTML5 Canvas 射擊對戰遊戲！整合 Firebase 即時位置同步與 Google Gemini AI 戰報。選擇你的喵星戰士，保護罐罐！">
+    <meta name="keywords" content="喵喵大戰, 罐罐保衛戰, HTML5遊戲, Canvas遊戲, 多人連線, Gemini AI, 貓咪遊戲">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@400;600;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #ff6f69;
+            --primary-light: #ff8b94;
+            --mint-bg: #b8f2e6;
+            --mint-dark: #88d4c5;
+            --warm-white: #fffdf9;
+            --card-bg: rgba(255, 255, 255, 0.92);
+            --dark-text: #2d3748;
+            --sub-text: #718096;
+            --ai-gradient: linear-gradient(135deg, #845ec2 0%, #d65db1 100%);
+            --shadow-soft: 0 12px 35px rgba(0, 0, 0, 0.08);
+            --shadow-pop: 0 8px 0 #ffaaa5;
+            --radius-xl: 28px;
+            --radius-md: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--mint-bg);
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(255, 139, 148, 0.25) 0%, transparent 50%),
+                radial-gradient(#a3e4d7 15%, transparent 16%), 
+                radial-gradient(#a3e4d7 15%, transparent 16%);
+            background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;
+            background-position: 0 0, 0 0, 0 0, 25px 25px;
+            color: var(--dark-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Top Navigation */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--primary);
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.6rem;
+            text-shadow: 2px 2px 0 #fff;
+            transition: transform 0.2s;
+        }
+
+        .brand:hover {
+            transform: scale(1.03);
+        }
+
+        .brand-icon {
+            font-size: 2rem;
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-cta {
+            background: var(--primary);
+            color: white !important;
+            padding: 10px 24px;
+            border-radius: 40px;
+            box-shadow: 0 4px 0 #e5534d;
+            transition: all 0.15s !important;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #e5534d;
+        }
+
+        .nav-cta:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #e5534d;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 20px 24px 80px 24px;
+        }
+
+        /* Hero Section */
+        .hero {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 40px;
+            align-items: center;
+            margin-top: 20px;
+            margin-bottom: 60px;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 0.9rem;
+            padding: 8px 18px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border: 2px solid #ffecf0;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 3.5rem;
+            line-height: 1.15;
+            color: #2b2b2b;
+            margin-bottom: 18px;
+            text-shadow: 3px 3px 0 #fff;
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+            display: inline-block;
+        }
+
+        .hero-desc {
+            font-size: 1.15rem;
+            color: #4a5568;
+            margin-bottom: 30px;
+            max-width: 520px;
+            line-height: 1.7;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 35px;
+        }
+
+        .btn-launch {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-size: 1.35rem;
+            font-weight: 800;
+            padding: 16px 38px;
+            border-radius: 50px;
+            box-shadow: 0 8px 0 #e5534d;
+            transition: all 0.15s;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-launch:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 11px 0 #e5534d;
+            background: #ff5e57;
+        }
+
+        .btn-launch:active {
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #e5534d;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: white;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 1.15rem;
+            font-weight: 800;
+            padding: 16px 30px;
+            border-radius: 50px;
+            border: 3px solid #ffaaa5;
+            box-shadow: 0 6px 0 #ffd3b6;
+            transition: all 0.15s;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #ffd3b6;
+            background: #fffafa;
+        }
+
+        .btn-secondary:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #ffd3b6;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 28px;
+            padding-top: 15px;
+            border-top: 2px dashed rgba(0,0,0,0.08);
+        }
+
+        .stat-item h4 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.6rem;
+            color: var(--primary);
+        }
+
+        .stat-item p {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--sub-text);
+        }
+
+        /* Hero Preview Card */
+        .hero-preview {
+            position: relative;
+            background: white;
+            padding: 16px;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-soft);
+            border: 6px solid #fff;
+            transform: rotate(-1deg);
+            transition: transform 0.3s;
+        }
+
+        .hero-preview:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+
+        .preview-img {
+            width: 100%;
+            border-radius: calc(var(--radius-xl) - 8px);
+            display: block;
+            object-fit: cover;
+            aspect-ratio: 16/10;
+        }
+
+        .floating-badge {
+            position: absolute;
+            bottom: -20px;
+            right: 20px;
+            background: var(--ai-gradient);
+            color: white;
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            box-shadow: 0 6px 20px rgba(132, 94, 194, 0.4);
+            border: 3px solid white;
+            animation: pulse-glow 3s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 6px 20px rgba(132, 94, 194, 0.4); }
+            50% { box-shadow: 0 8px 30px rgba(214, 93, 177, 0.7); }
+        }
+
+        /* Embedded Arena Section */
+        .arena-section {
+            background: var(--card-bg);
+            border-radius: var(--radius-xl);
+            padding: 30px;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 60px;
+            border: 4px solid #fff;
+        }
+
+        .arena-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .arena-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .arena-title h2 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .arena-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-sm {
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            border-radius: 20px;
+            border: 2px solid #ff8b94;
+            background: white;
+            color: var(--primary);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-sm:hover {
+            background: #ffecf0;
+            transform: translateY(-2px);
+        }
+
+        .arena-wrapper {
+            position: relative;
+            width: 100%;
+            height: 620px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+            border: 3px solid #ffaaa5;
+            background: #b8f2e6;
+        }
+
+        .arena-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* Features Section */
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title h2 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.4rem;
+            color: #2b2b2b;
+            margin-bottom: 8px;
+        }
+
+        .section-title p {
+            color: var(--sub-text);
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 30px 24px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-soft);
+            border: 3px solid white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 30px rgba(0,0,0,0.08);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .feature-card h3 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Characters Section */
+        .characters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .char-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: center;
+            border: 3px solid #ffecf0;
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.2s;
+        }
+
+        .char-card:hover {
+            transform: scale(1.04);
+            border-color: var(--primary-light);
+        }
+
+        .char-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            margin: 0 auto 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            border: 4px solid #eee;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+
+        .char-white { background: #fff; border-color: #ffd3b6; }
+        .char-orange { background: #ffe0b2; border-color: #ffb74d; }
+        .char-black { background: #424242; color: #fff; border-color: #212121; }
+        .char-calico { background: linear-gradient(135deg, #fff 40%, #ffcc80 40%, #ffcc80 60%, #424242 60%); border-color: #ff8b94; }
+
+        .char-card h4 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.25rem;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .char-trait {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 800;
+            background: #ffecf0;
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        .char-card p {
+            font-size: 0.88rem;
+            color: #666;
+        }
+
+        /* Weapons Guide */
+        .weapons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 22px;
+            margin-bottom: 60px;
+        }
+
+        .weapon-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            border: 3px solid #ffd3b6;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .weapon-icon-box {
+            width: 70px;
+            height: 70px;
+            background: #fff0f0;
+            border: 3px solid #ff8b94;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 0 #ffaaa5;
+        }
+
+        .weapon-info h4 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .weapon-info p {
+            font-size: 0.88rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .weapon-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 2px dashed rgba(0,0,0,0.08);
+            color: var(--sub-text);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 800;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 880px) {
+            .navbar { padding: 15px 20px; }
+            .nav-links { display: none; }
+            .hero { grid-template-columns: 1fr; text-align: center; }
+            .hero-desc { margin: 0 auto 25px auto; }
+            .hero-actions { justify-content: center; }
+            .hero-stats { justify-content: center; }
+            .arena-wrapper { height: 500px; }
+            .hero h1 { font-size: 2.5rem; }
+        }
+
+        @media (max-width: 540px) {
+            .arena-wrapper { height: 440px; }
+            .btn-launch, .btn-secondary { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <nav class="navbar">
+        <a href="#" class="brand">
+            <span class="brand-icon">🐱</span>
+            <span>喵喵大戰</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#arena">立即試玩</a></li>
+            <li><a href="#features">遊戲特色</a></li>
+            <li><a href="#characters">喵咪角色</a></li>
+            <li><a href="#weapons">武器圖鑑</a></li>
+            <li><a href="game.html" target="_blank" class="nav-cta">全螢幕開戰 🚀</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <div class="badge-pill">
+                    <span>✨</span> Google Gemini 3.6 Flash x Firebase 即時同步
+                </div>
+                <h1>喵喵大戰：<br><span>罐罐保衛戰</span> 🐱🐟</h1>
+                <p class="hero-desc">
+                    守護最後的美味小魚乾！操縱你的專屬貓咪戰士，在無邊界大地圖中與各路萌獸一決高下。支援跨平台多人連線同步與 AI 智慧戰報！
+                </p>
+                <div class="hero-actions">
+                    <a href="game.html" class="btn-launch" id="hero-play-btn">
+                        <span>▶</span> 立即全螢幕開戰
+                    </a>
+                    <a href="#arena" class="btn-secondary">
+                        <span>🎮</span> 網頁直接試玩
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <h4>60 FPS</h4>
+                        <p>極致流暢 Canvas</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>100%</h4>
+                        <p>純前端單檔案運算</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>跨平台</h4>
+                        <p>手機 / 電腦無縫暢玩</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-preview">
+                <img src="image_dc3274.png" alt="喵喵大戰遊戲畫面" class="preview-img" onerror="this.src='logo0.jpg';">
+                <div class="floating-badge">
+                    🤖 AI 智慧戰報已連線
+                </div>
+            </div>
+        </section>
+
+        <!-- Embedded Interactive Arena Section -->
+        <section id="arena" class="arena-section">
+            <div class="arena-header">
+                <div class="arena-title">
+                    <span style="font-size: 2rem;">⚔️</span>
+                    <div>
+                        <h2>在線戰鬥試玩視窗</h2>
+                        <p style="color: var(--sub-text); font-size: 0.9rem;">免安裝、隨開隨玩！點擊視窗即可開始喵喵叫！</p>
+                    </div>
+                </div>
+                <div class="arena-actions">
+                    <button class="btn-sm" onclick="document.getElementById('game-iframe').contentWindow.location.reload();">
+                        🔄 重新載入
+                    </button>
+                    <a href="game.html" target="_blank" class="btn-sm" style="background: var(--primary); color: white; border-color: var(--primary);">
+                        ⛶ 全螢幕開啟
+                    </a>
+                </div>
+            </div>
+
+            <div class="arena-wrapper">
+                <iframe id="game-iframe" src="game.html" class="arena-frame" allow="autoplay" loading="lazy"></iframe>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section id="features" class="section-title">
+            <h2>遊戲核心亮點 🌟</h2>
+            <p>融合極致流暢手感與尖端 AI 生成技術的休閒競技體驗</p>
+        </section>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">🐟</span>
+                <h3>Firestore 即時連線</h3>
+                <p>多人位置即時同步廣播與雲端動態排行榜，與全服貓友同場競速保衛罐罐。</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">✨</span>
+                <h3>Gemini 3.6 Flash</h3>
+                <p>一鍵生成逗趣霸氣的貓咪戰士名字；陣亡結算時智慧生成幽默墓誌銘戰報。</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🐕</span>
+                <h3>不透明原生 Emoji</h3>
+                <p>萌度爆表的動物敵軍（柴柴、樹懶、兔兔、狐狸），採用高畫質原生 Emoji 渲染。</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📱</span>
+                <h3>雙搖桿觸控支援</h3>
+                <p>手機端無縫呼叫左右雙虛擬搖桿（左手走位、右手瞄準發射），支援電腦 WASD 滑鼠。</p>
+            </div>
+        </div>
+
+        <!-- Characters Section -->
+        <section id="characters" class="section-title">
+            <h2>貓咪戰士陣容 🐾</h2>
+            <p>選擇最符合你個性或今日心情的萌貓出戰</p>
+        </section>
+
+        <div class="characters-grid">
+            <div class="char-card">
+                <div class="char-avatar char-white">🐱</div>
+                <h4>白白 (White)</h4>
+                <span class="char-trait">經典平衡</span>
+                <p>動作靈活身段輕盈，最受貓奴喜愛的純白毛色。</p>
+            </div>
+            <div class="char-card">
+                <div class="char-avatar char-orange">🐱</div>
+                <h4>橘子 (Orange)</h4>
+                <span class="char-trait">罐罐狂熱</span>
+                <p>十隻橘貓九隻胖，為了搶罐罐能爆發出驚人意志！</p>
+            </div>
+            <div class="char-card">
+                <div class="char-avatar char-black">🐱</div>
+                <h4>黑炭 (Black)</h4>
+                <span class="char-trait">暗夜刺客</span>
+                <p>夜色中的神秘獵手，行動無聲無息且充滿霸氣。</p>
+            </div>
+            <div class="char-card">
+                <div class="char-avatar char-calico">🐱</div>
+                <h4>三花 (Calico)</h4>
+                <span class="char-trait">幸運錦鯉</span>
+                <p>傳說中能帶來好運與小魚乾的珍貴三花花紋。</p>
+            </div>
+        </div>
+
+        <!-- Weapons Section -->
+        <section id="weapons" class="section-title">
+            <h2>特選三段武器庫 🦴💣🧶</h2>
+            <p>鍵盤按下 1 / 2 / 3 或點擊武器槽，隨時切換攻擊型態</p>
+        </section>
+
+        <div class="weapons-grid">
+            <div class="weapon-card">
+                <div class="weapon-icon-box">🦴</div>
+                <div class="weapon-info">
+                    <h4>魚刺回力鏢 (Fish Bone)</h4>
+                    <p>經典貓式骨頭投擲，具備弧形飛行彈道與中距離穿透傷害。</p>
+                    <div class="weapon-stats">
+                        <span>傷害: 35</span>
+                        <span>冷卻: 0.5s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="weapon-card">
+                <div class="weapon-icon-box">💣</div>
+                <div class="weapon-info">
+                    <h4>貓草炸彈 (Catnip Bomb)</h4>
+                    <p>超強爆炸威力，面對大批敵群時的最佳清場重裝武器。</p>
+                    <div class="weapon-stats">
+                        <span>傷害: 50</span>
+                        <span>冷卻: 0.8s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="weapon-card">
+                <div class="weapon-icon-box">🧶</div>
+                <div class="weapon-info">
+                    <h4>極速毛線球 (Yarn Ball)</h4>
+                    <p>極高射速連續牽制，如同機關槍般不間斷壓制靠近的動物。</p>
+                    <div class="weapon-stats">
+                        <span>傷害: 20</span>
+                        <span>冷卻: 0.15s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 《喵喵大戰：罐罐保衛戰》(Meow Meow Battle). All Rights Reserved.</p>
+        <p style="margin-top: 8px; font-size: 0.85rem;">
+            開源專案代碼託管於 <a href="https://github.com/aiohlala/meow-meow" target="_blank">GitHub: aiohlala/meow-meow</a> ｜ 
+            入口網站託管於 <a href="https://github.com/aiohlala/meow-meow-battle" target="_blank">aiohlala/meow-meow-battle</a>
+        </p>
+    </footer>
+
+</body>
+</html>
